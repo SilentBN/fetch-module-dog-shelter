@@ -1,24 +1,74 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 
-const initialForm = { name: '', breed: '', adopted: false }
+const initialForm = { name: "", breed: "", adopted: false };
 
 // Use this form for both POST and PUT requests!
 export default function DogForm() {
-  const [values, setValues] = useState(initialForm)
+  const [values, setValues] = useState(initialForm);
+  const [breeds, setBreeds] = useState([]);
+  const [isEditing, setIsEditing] = useState(false);
+  const { id } = useParams();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    fetchBreeds();
+    if (id) {
+      setIsEditing(true);
+      fetchDog(id);
+    }
+  }, [id]);
+
+  const fetchBreeds = () => {
+    fetch("http://localhost:9009/api/dogs/breeds")
+      .then((res) => res.json())
+      .then((data) => setBreeds(data))
+      .catch((error) => console.error("Error fetching breeds:", error));
+  };
+
+  const fetchDog = (dogId) => {
+    fetch(`http://localhost:9009/api/dogs/${dogId}`)
+      .then((res) => res.json())
+      .then((data) => setValues(data))
+      .catch((error) => console.error("Error fetching dog:", error));
+  };
+
   const onSubmit = (event) => {
-    event.preventDefault()
-  }
-  const onChange = (event) => {
-    const { name, value, type, checked } = event.target
-    setValues({
-      ...values, [name]: type === 'checkbox' ? checked : value
+    event.preventDefault();
+    const url = isEditing
+      ? `http://localhost:9009/api/dogs/${id}`
+      : "http://localhost:9009/api/dogs";
+    const method = isEditing ? "PUT" : "POST";
+
+    fetch(url, {
+      method: method,
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(values),
     })
-  }
+      .then((res) => res.json())
+      .then(() => {
+        navigate("/");
+      })
+      .catch((error) => console.error("Error submitting form:", error));
+  };
+
+  const onChange = (event) => {
+    const { name, value, type, checked } = event.target;
+    setValues({
+      ...values,
+      [name]: type === "checkbox" ? checked : value,
+    });
+  };
+
+  const resetForm = () => {
+    setValues(initialForm);
+  };
+
   return (
     <div>
-      <h2>
-        Create Dog
-      </h2>
+      <h2>{isEditing ? "Edit Dog" : "Create Dog"}</h2>
       <form onSubmit={onSubmit}>
         <input
           name="name"
@@ -34,10 +84,15 @@ export default function DogForm() {
           aria-label="Dog's breed"
         >
           <option value="">---Select Breed---</option>
-          {/* Populate this dropdown using data obtained from the API */}
+          {breeds.map((breed) => (
+            <option key={breed} value={breed}>
+              {breed}
+            </option>
+          ))}
         </select>
         <label>
-          Adopted: <input
+          Adopted:{" "}
+          <input
             type="checkbox"
             name="adopted"
             checked={values.adopted}
@@ -47,11 +102,13 @@ export default function DogForm() {
         </label>
         <div>
           <button type="submit">
-            Create Dog
+            {isEditing ? "Update Dog" : "Create Dog"}
           </button>
-          <button aria-label="Reset form">Reset</button>
+          <button type="button" onClick={resetForm} aria-label="Reset form">
+            Reset
+          </button>
         </div>
       </form>
     </div>
-  )
+  );
 }
