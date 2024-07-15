@@ -10,7 +10,7 @@
     "start": "npm run backend"
   },
   "devDependencies": {
-    "@babel/core": "^7.24.4",
+    "@babel/core": "^7.24.9",
     "@babel/preset-env": "^7.24.4",
     "@babel/preset-react": "^7.24.1",
     "@testing-library/jest-dom": "^6.4.6",
